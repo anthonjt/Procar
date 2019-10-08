@@ -21,5 +21,8 @@
 #define TRANSFER_BAUDRATE 2000000U /*! Transfer baudrate - 2 megahertz */
 
 void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_handle_t *handle, status_t status, void *userData);
-uint8_t* getBlocks();
+uint8_t* getBlocks();//function for returning all blocks
+uint8_t* setServos(uint16_t s0, uint16_t s1);//values from 0-511, s0 tilt, s1 pan
+uint8_t* setLED(uint8_t r, uint8_t g, uint8_t b);//values from 0-255 for colors5
+uint8_t setCameraBrightness(uint8_t brightness);//values from 0-25
 #endif
