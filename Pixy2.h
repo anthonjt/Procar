@@ -24,5 +24,10 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_handle_t *handle, statu
 uint8_t* getBlocks();//function for returning all blocks
 uint8_t* setServos(uint16_t s0, uint16_t s1);//values from 0-511, s0 tilt, s1 pan
 uint8_t* setLED(uint8_t r, uint8_t g, uint8_t b);//values from 0-255 for colors5
-uint8_t setCameraBrightness(uint8_t brightness);//values from 0-25
+uint8_t* setCameraBrightness(uint8_t brightness);//values from 0-255
+uint8_t* getResolution();//returns frame height and width
+uint8_t* getVersion();//returns information on version
+uint8_t* setLamp(uint8_t upper, uint8_t lower);//lower and upper values 0 or 1
+uint8_t* getFPS();//returns frames per second
+uint8_t* getMainFeatures();//returns line data: barcodes, vectors, intersections
 #endif
