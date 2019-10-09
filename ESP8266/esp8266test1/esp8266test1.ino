@@ -44,16 +44,15 @@ void setup(void)
 
 void loop() 
 {
-    //if (Serial.available() > 0) {
-      // read the incoming byte:
-    //incomingByte = Serial.read();
-    snprintf(datastring, sizeof(datastring), "&k64fval=%d&espval=%f&IPaddress=%s", k64fval, espval, IPaddress);
+    if (Serial.available() > 0) {
+      incomingByte = Serial.read();
+      int data1 = (int)incomingByte;
+      Serial.println(incomingByte);
+    snprintf(datastring, sizeof(datastring), "&k64fval=%d&espval=%f&IPaddress=%s", data1, espval, IPaddress);
     snprintf(url, sizeof(url), "%s%s", urlbegin, datastring);
     client1.begin(url);
     httpcode = client1.GET();
-    Serial.println(url);
+    //Serial.println(url);
     delay(5000);
-    // say what you got:
-    //Serial.println(incomingByte, DEC);
-  //}
+  }
 }
