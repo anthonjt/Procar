@@ -11,9 +11,26 @@ uint8_t masterRxData[TRANSFER_SIZE] = {0U};
 uint8_t masterTxData[TRANSFER_SIZE] = {0U};
 dspi_master_config_t masterConfig;
 dspi_transfer_t masterXfer;
-uint32_t srcClock_Hz;
+uint32_t srcClock_Hz = DSPI_MASTER_CLK_FREQ;;
 dspi_master_handle_t g_m_handle;
 volatile bool isTransferCompleted = false;
+
+//masterConfig settings
+masterConfig.whichCtar                                = kDSPI_Ctar0;
+masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
+masterConfig.ctarConfig.bitsPerFrame                  = 8U;
+masterConfig.ctarConfig.cpol                          = kDSPI_ClockPolarityActiveHigh;
+masterConfig.ctarConfig.cpha                          = kDSPI_ClockPhaseFirstEdge;
+masterConfig.ctarConfig.direction                     = kDSPI_MsbFirst;
+masterConfig.ctarConfig.pcsToSckDelayInNanoSec        = 1000000000U / TRANSFER_BAUDRATE;
+masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / TRANSFER_BAUDRATE;
+masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
+masterConfig.whichPcs           = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
+masterConfig.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
+masterConfig.enableContinuousSCK        = false;
+masterConfig.enableRxFifoOverWrite      = false;
+masterConfig.enableModifiedTimingFormat = false;
+masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
 
 //getBlocks data
 uint8_t getBlocksSend[] = {174, 193, 32, 2, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0};//transfer data for getBlocks function
@@ -112,32 +129,38 @@ void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_handle_t *handle, statu
     isTransferCompleted = true;
 }
 
-//masterConfig settings
-masterConfig.whichCtar                                = kDSPI_Ctar0;
-masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
-masterConfig.ctarConfig.bitsPerFrame                  = 8U;
-masterConfig.ctarConfig.cpol                          = kDSPI_ClockPolarityActiveHigh;
-masterConfig.ctarConfig.cpha                          = kDSPI_ClockPhaseFirstEdge;
-masterConfig.ctarConfig.direction                     = kDSPI_MsbFirst;
-masterConfig.ctarConfig.pcsToSckDelayInNanoSec        = 1000000000U / TRANSFER_BAUDRATE;
-masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / TRANSFER_BAUDRATE;
-masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
+uint8_t* genericSPI(uint8_t* txData, uint8_t txDataSize, uint8_t rxDataSize){
+    uint8_t rxData[rxDataSize];
+    DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
 
-masterConfig.whichPcs           = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
-masterConfig.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
+    DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    
+    /* Start master transfer, send data to slave */
+    isTransferCompleted
+    = true;
+    masterXfer.txData      = txData;//masterTxData
+    masterXfer.rxData      = NULL;
+    masterXfer.dataSize    = txDataSize;
+    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
+    /* Wait transfer complete */
+    while (!isTransferCompleted){
+    }
+    /* Delay to wait slave is ready */
+    for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
+        __NOP();
+    }
+    /* Start master transfer, receive data from slave */
+    isTransferCompleted    = true;
+    masterXfer.txData      = NULL;
+    masterXfer.rxData      = rxData;//masterRxData
+    masterXfer.dataSize    = rxDataSize;//Transfer_Size
+    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
+    return rxData;
+}
 
-masterConfig.enableContinuousSCK        = false;
-masterConfig.enableRxFifoOverWrite      = false;
-masterConfig.enableModifiedTimingFormat = false;
-masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
-
-srcClock_Hz = DSPI_MASTER_CLK_FREQ;
-DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, srcClock_Hz);
-
-DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
-
-
-//start of functions
+//start of Pixy2 functions
 uint8_t* getBlocks(){
     returnBlocks = genericSPI(getBlocksSend, getBlocksSendSize, getBlocksReturnSize);
     
@@ -272,32 +295,4 @@ uint8_t* getRGB(uint16_t x, uint16_t y, uint8_t saturate){
     returnRGB = genericSPI(getRGBSend, getRGBSendSize, getRGBReturnSize);
     
     return returnRGB;
-}
-
-uint8_t* genericSPI(uint8_t* txData, uint8_t txDataSize, uint8_t rxDataSize){
-    uint8_t rxData[rxDataSize];
-    
-    /* Start master transfer, send data to slave */
-    isTransferCompleted
-    = true;
-    masterXfer.txData      = txData;//masterTxData
-    masterXfer.rxData      = NULL;
-    masterXfer.dataSize    = txDataSize;
-    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
-    /* Wait transfer complete */
-    while (!isTransferCompleted){
-    }
-    /* Delay to wait slave is ready */
-    for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
-        __NOP();
-    }
-    /* Start master transfer, receive data from slave */
-    isTransferCompleted    = true;
-    masterXfer.txData      = NULL;
-    masterXfer.rxData      = rxData;//masterRxData
-    masterXfer.dataSize    = rxDataSize;//Transfer_Size
-    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
-    return rxData;
 }

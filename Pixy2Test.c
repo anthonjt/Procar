@@ -66,5 +66,27 @@ int main(void)
         for (int i=0; i<20; i++){
             PRINTF(" %02X", setCameraBrightnessData[i]);
         }
+        
+        //getResolution test
+        
+        //getVersion test
+        
+        //setLamp test
+        
+        //getFPS test
+        
+        //getMainFeatures test
+        
+        //setMode test
+        
+        //setNextTurn test
+        
+        //setDefaultTurn test
+        
+        //setVector test
+        
+        //reverseVector test
+        
+        //getRGB test
     }
 }
