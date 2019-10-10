@@ -30,4 +30,10 @@ uint8_t* getVersion();//returns information on version
 uint8_t* setLamp(uint8_t upper, uint8_t lower);//lower and upper values 0 or 1
 uint8_t* getFPS();//returns frames per second
 uint8_t* getMainFeatures();//returns line data: barcodes, vectors, intersections
+uint8_t* setMode(uint8_t mode);//sets mode for line tracking
+uint8_t* setNextTurn(uint16_t* angle);//sets turn angle for camera
+uint8_t* setDefaultTurn(uint16_t* angle);//sets default turn angle for camera
+uint8_t* setVector(uint8_t angle);//vector index function
+uint8_t* reverseVector();//reverses vector angle???
+uint8_t* getRGB(uint16_t x, uint16_t y, uint8_t saturate);//gets color value at location
 #endif
