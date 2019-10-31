@@ -47,14 +47,27 @@ int main(void) {
 
     PRINTF("Hello World\n");
 
-    __disable_irq();        /* global disable IRQs */
-    SIM->SCGC5 |= 0x100;    /* enable clock to Port B */
-    PORTA->PCR[1] = 0x100; /* make PTA1 pin as GPIO */
-    PTA->PDDR |= 0x40000;   /* make PTA1 as output pin */
+//    __disable_irq();        /* global disable IRQs */
+//    SIM->SCGC5 |= 0x100;    /* enable clock to Port B */
+//    PORTA->PCR[1] = 0x100; /* make PTA1 pin as GPIO */
+//    PTA->PDDR |= 0x40000;   /* make PTA1 as output pin */
+//    __enable_irq();         /* global enable IRQs */
     PWM_init();             /* Configure PWM */
     ADC0_init();            /* Configure ADC0 */
-    __enable_irq();         /* global enable IRQs */
     return 0 ;
+}
+
+void FTM0_IRQHandler(void) {
+	NVIC_DisableIRQ(TPM0_IRQn);
+	ADC0->SC1[0] = 0; /* start conversion on channel 0 */
+	while (!(ADC0->SC1[0] & 0x80)) {} /* wait for conversion complete */
+	result = ADC0->R[0]; /* read conversion result and clear COCO flag */
+	/*----- DC Motor Control with PWM 0-100% duty cycle----------------*/
+	TPM1->MOD = mod * 2;
+	TPM1->CONTROLS[1].CnV = result; /* Set up channel value 50% Duty cycle*/
+	PTB->PTOR = 0x80000; /* toggle green LED */
+	TPM1->SC |= 0x80; /* clear TOF */
+	NVIC_EnableIRQ(FTM0_IRQn);
 }
 
 void PWM_init(void)
@@ -79,4 +92,42 @@ void ADC0_init(void)
     SIM->SCGC6 |= 0x8000000;    /* clock to ADC0 */
     ADC0->SC2 &= ~0x40;         /* software trigger */
     ADC0->CFG1 = 0x40 | 0x10 | 0x04 | 0x00; /* clock div by 4, long sample time, single ended 12 bit, bus clock */
+
+    //Start Calibration
+    ADC0->SC3 |= ADC_SC3_CAL_MASK;
+	while (ADC0->SC3 & ADC_SC3_CAL_MASK) {
+	// Wait for calibration to complete
+	}
+	// Finish off the calibration
+	// Initialize a 16-bit variable in RAM
+	calibration = 0x0;
+	// Add the plus-side calibration results to the variable
+	calibration += ADC0->CLP0;
+	calibration += ADC0->CLP1;
+	calibration += ADC0->CLP2;
+	calibration += ADC0->CLP3;
+	calibration += ADC0->CLP4;
+	calibration += ADC0->CLPS;
+	// Divide by two
+	calibration /= 2;
+	// Set the MSB of the variable
+	calibration |= 0x8000;
+	// Store the value in the plus-side gain calibration register
+	ADC0->PG = calibration;
+	// Repeat the procedure for the minus-side calibration value
+	calibration = 0x0000;
+	calibration += ADC0->CLM0;
+	calibration += ADC0->CLM1;
+	calibration += ADC0->CLM2;
+	calibration += ADC0->CLM3;
+	calibration += ADC0->CLM4;
+	calibration += ADC0->CLMS;
+	calibration /= 2;
+	calibration |= 0x8000;
+	ADC0->MG = calibration;
+    //Done Calibration
+
+	/* Reconfigure ADC0*/
+    /* clock div by 4, long sample time, single ended 12 bit, bus clock */
+    ADC0->CFG1 = 0x40 | 0x10 | 0x04 | 0x00;
 }
