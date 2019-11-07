@@ -6,8 +6,6 @@ void PWM_init(void);
 void ADC0_init(void);
 void DC_Motor(void);
 
-int speed = 50;
-
 #define mod 2047
 
 int main(void) {
@@ -19,7 +17,9 @@ int main(void) {
     BOARD_InitDebugConsole();
     __disable_irq();        /* global disable IRQs */
     PWM_init();
-    DC_Motor();
+    FTM2_IRQHandler();
+    __enable_irq();
+
 	while(1) {
 
 	}
@@ -39,15 +39,16 @@ void PWM_init(void) // Also enables the TOF interrupt
 	FTM2->SC = 0;               // disable timer */
 	FTM2->CONTROLS[1].CnSC = 0x20|0x08;   /* edge-aligned, pulse high MSB:MSA=10, ELSB:ELSA=10*/
 	FTM2->MOD = mod;            // Set up modulo register for 42.6 us period or 23.3 kHz rate */
-	FTM2->CONTROLS[1].CnV = mod/10;  /* Set up default channel value for 50% dutycycle */
+	FTM2->CONTROLS[1].CnV = mod/2;  /* Set up default channel value for 50% dutycycle */
 	FTM2->SC |= 0x80;           // clear TOF */
-	FTM2->SC |= 0x0B;           // enable timer with prescaler /8 For DC motor and Buzzer*/
+	FTM2->SC |= 0x40;           // enable timer with prescaler /8 For DC motor and Buzzer*/
+	FTM2->SC |= 0x0B;
 	NVIC->ISER[0] |= 0x00080000;
 }
 
-void DC_Motor(void){
+void FTM2_IRQHandler(void){
 	NVIC->ISER[0] &= ~0x00080000;
-
+	int speed = 50;
 	FTM2->MOD = mod/2;
 	FTM2->CONTROLS[1].CnV = (mod*speed)/100;  // Set up channel value 50% Duty cycle
 }
