@@ -5,7 +5,6 @@
 #include "fsl_debug_console.h"
 #include "fsl_dspi.h"
 #include "board.h"
-#include "Pixy2.h"
 #include "pin_mux.h"
 #include "clock_config.h"
 
