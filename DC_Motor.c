@@ -6,11 +6,11 @@
 #include "fsl_debug_console.h"
 #include "DC_Motor.h"
 
-void PWM_init_1(void){
-    SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;  /*Enable the PORTC Clock*/
+void PWM_initfun(void){
+    SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;  /*Enable the PORTC Clock*/
     SIM->SCGC3 |= SIM_SCGC3_FTM3_MASK;   /*Enable the FTM0 Clock*/
     PORTC->PCR[10] = PORT_PCR_MUX(3);     /*MUX = ALT 3*/
-    BITBAND_REG(GPIOC->PDDR, 2) = 1;     //Make PTC pin 2 output
+    BITBAND_REG(GPIOC->PDDR, 10) = 1;     //Make PTC pin 2 output
     FTM3->SC = 0;  						// Make sure its Off!
     FTM3->CNTIN = 0;  				    // starting value for counter
     FTM3->CNT= 0; 						// loads the counter with CNTIN
@@ -20,12 +20,15 @@ void PWM_init_1(void){
     FTM3->CONF = FTM_CONF_BDMMODE(3); 	// Set FTM to operate normally in BDM mode
     FTM3->SC  |= FTM_SC_PS(FTM3_CLK_PRESCALE); 		// Divide the input clock down by 2^FTM0_CLK_PRESCALE
     FTM3->SC  |= FTM_SC_CLKS(FTM3_CH6_CLK_SOURCE);  // Use the system clk
-    FTM3->SC  |= FTM_SC_TOIE(1); 					// Enable Timer Overflow interrupts
-    NVIC_EnableIRQ(FTM3_IRQn);    					/*Enable the FTM Interrupt*/
-    FTM3->CONTROLS[6].CnV = FTM3_MOD_VALUE*.5;//
+    //FTM3->SC  |= FTM_SC_TOIE(1);
+    FTM3->CONTROLS[6].CnV = FTM3_MOD_VALUE*0.5;//
 }
 
 void FTM3_IRQHandler (void){
    (void)FTM3->SC;
    FTM3->SC |= 0x0080;
+}
+
+void setFTM3CnV(float a){
+	FTM3->CONTROLS[6].CnV = FTM3_MOD_VALUE*a;
 }
