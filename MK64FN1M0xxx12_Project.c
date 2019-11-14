@@ -8,6 +8,7 @@
 
 
 void PWM_init(void);
+void FTM0_IRQHandler(void);
 //void ADC0_init(void);
 
 #define FTM0_MOD_VALUE 37500
