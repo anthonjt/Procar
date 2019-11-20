@@ -16,7 +16,7 @@ float lastE = 0;
 float thisE;
 float Kp = 2.89351852; // This value will need to be experimentally determined
 float Ki = 2.89351852; // This value will need to be experimentally determined
-float Ts = 1;		   // change in time for integral
+float Ts = .020;		   // send PWM every 20 ms
 
 float PID_Controller (void)
 {
@@ -51,9 +51,9 @@ int main(void)
     FTM0->SC  |= FTM_SC_CLKS(FTM0_CH1_CLK_SOURCE);  // Use the system clk
     FTM0->SC  |= FTM_SC_TOIE(1); 					// Enable Timer Overflow interrupts
     NVIC_EnableIRQ(FTM0_IRQn);    					/*Enable the FTM Interrupt*/
+    FTM0->CONTROLS[1].CnV = PID_Controller(); 	// Use 0.05, 0.075, 0.1
 
      while (1){
-    	    FTM0->CONTROLS[1].CnV = PID_Controller(); 	// Use 0.05, 0.075, 0.1
    }
      return 0;
 }
