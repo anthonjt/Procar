@@ -18,8 +18,6 @@
 #define TRANSFER_BAUDRATE 2000000U /*! Transfer baudrate - 2 megahertz */
 
 void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_handle_t *handle, status_t status, void *userData);
-void genericSPI(uint8_t* txData, uint8_t txDataSize);//returns rxData array
-void delay(int a);
 
 //functions for the Pixy2 camera
 uint8_t* getBlocks();//function for returning all blocks

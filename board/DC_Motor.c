@@ -13,7 +13,7 @@ void PWM_initfun(void){
     BITBAND_REG(GPIOC->PDDR, 10) = 1;     //Make PTC pin 2 output
     FTM3->SC = 0;  						// Make sure its Off!
     FTM3->CNTIN = 0;  				    // starting value for counter
-    FTM3->CNT= 0; 						// loads the counter with CNTIN
+    FTM3->CNT= 0; 			// loads the counter with CNTIN
     FTM3->CONTROLS[6].CnSC = FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK; // FTM0_CH6
     FTM3->MOD = FTM3_MOD_VALUE; 		// set the mod value
     /* Optionally, if you want FTM to operate during debug, set the BDM mode */
@@ -21,7 +21,7 @@ void PWM_initfun(void){
     FTM3->SC  |= FTM_SC_PS(FTM3_CLK_PRESCALE); 		// Divide the input clock down by 2^FTM0_CLK_PRESCALE
     FTM3->SC  |= FTM_SC_CLKS(FTM3_CH6_CLK_SOURCE);  // Use the system clk
     //FTM3->SC  |= FTM_SC_TOIE(1);
-    FTM3->CONTROLS[6].CnV = FTM3_MOD_VALUE*0.15;//
+    FTM3->CONTROLS[6].CnV = FTM3_MOD_VALUE*0.15;//neutral value
 }
 
 void FTM3_IRQHandler (void){

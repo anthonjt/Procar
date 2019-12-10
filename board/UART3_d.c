@@ -40,6 +40,10 @@ void delay_ms(int milliseconds){
 	for(int j=0; j<(8700*milliseconds); j++);//about 1 millisecons
 }
 
+void delay_us(int microseconds){
+	for(int j=0; j<(9*microseconds); j++);//about 1 millisecons
+}
+
 int getArrayLength(uint8_t* array){
 	int length = 0;
 	for(int i=0; (array[i] != '\0'); i++){

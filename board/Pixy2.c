@@ -6,10 +6,16 @@
 #include "pin_mux.h"
 #include "clock_config.h"
 
+volatile bool isTransferCompleted = false;
 uint8_t* rxData;
 dspi_master_config_t masterConfig;
 dspi_transfer_t masterXfer;
-dspi_master_handle_t g_m_handle;volatile bool isTransferCompleted = false;
+dspi_master_handle_t g_m_handle;
+volatile bool isTransferCompleted2 = false;
+uint8_t* rxData2;
+dspi_master_config_t masterConfig2;
+dspi_transfer_t masterXfer2;
+dspi_master_handle_t g_m_handle2;
 
 uint8_t zeroData[50];
 uint8_t zeroDataSize = 50;
@@ -63,7 +69,7 @@ uint8_t returnFPS[10];
 int getFPSReturnSize = 10;
 
 //getMainFeatures data
-uint8_t getMainFeaturesSend[] = {174, 193, 48, 2, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0};//transfer data for getMainFeatures function
+uint8_t getMainFeaturesSend[] = {174, 193, 48, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0};//transfer data for getMainFeatures function
 int getMainFeaturesSendSize = sizeof(getMainFeaturesSend);
 uint8_t returnMainFeatures[50];
 int getMainFeaturesReturnSize = 50;
@@ -103,10 +109,6 @@ uint8_t getRGBSend[] = {174, 193, 112, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 int getRGBSendSize = sizeof(getRGBSend);
 uint8_t returnRGB[9];
 int getRGBReturnSize = 9;
-
-void delay(int a){
-	for(int i; i<a; i++);
-}
 
 void DSPI_MasterUserCallback(SPI_Type *base, dspi_master_handle_t *handle, status_t status, void *userData){
     if (status == kStatus_Success){
@@ -163,7 +165,6 @@ uint8_t* getBlocks(){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnBlocks;
 }
 
@@ -205,6 +206,7 @@ uint8_t* setServos(uint16_t s0, uint16_t s1){
     masterXfer.dataSize    = setServosSendSize;
     masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
     DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     /* Wait transfer complete */
     while (!isTransferCompleted){
     }
@@ -225,7 +227,6 @@ uint8_t* setServos(uint16_t s0, uint16_t s1){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_MasterTransferAbort(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle);
     return returnServos;
 }
 
@@ -251,6 +252,7 @@ uint8_t* setLED(uint8_t r, uint8_t g, uint8_t b){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -280,7 +282,6 @@ uint8_t* setLED(uint8_t r, uint8_t g, uint8_t b){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnLED;
 }
 
@@ -302,6 +303,7 @@ uint8_t* setCameraBrightness(uint8_t brightness){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -331,7 +333,6 @@ uint8_t* setCameraBrightness(uint8_t brightness){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnBrightness;
 }
 
@@ -353,6 +354,7 @@ uint8_t* getResolution(){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -382,7 +384,6 @@ uint8_t* getResolution(){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnResolution;
 }
 
@@ -404,6 +405,7 @@ uint8_t* getVersion(){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -433,7 +435,6 @@ uint8_t* getVersion(){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnVersion;
 }
 
@@ -458,6 +459,7 @@ uint8_t* setLamp(uint8_t upper, uint8_t lower){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -487,7 +489,6 @@ uint8_t* setLamp(uint8_t upper, uint8_t lower){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnLamp;
 }
 
@@ -509,6 +510,7 @@ uint8_t* getFPS(){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -538,64 +540,64 @@ uint8_t* getFPS(){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnFPS;
 }
 
 uint8_t* getMainFeatures(){
-	masterConfig.whichCtar = kDSPI_Ctar0;
-	masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
-	masterConfig.ctarConfig.bitsPerFrame                  = 8U;
-	masterConfig.ctarConfig.cpol                          = kDSPI_ClockPolarityActiveHigh;
-	masterConfig.ctarConfig.cpha                          = kDSPI_ClockPhaseFirstEdge;
-	masterConfig.ctarConfig.direction                     = kDSPI_MsbFirst;
-	masterConfig.ctarConfig.pcsToSckDelayInNanoSec        = 1000000000U / TRANSFER_BAUDRATE;
-	masterConfig.ctarConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / TRANSFER_BAUDRATE;
-	masterConfig.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
-	masterConfig.whichPcs           = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
-	masterConfig.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
-	masterConfig.enableContinuousSCK        = false;
-	masterConfig.enableRxFifoOverWrite      = false;
-	masterConfig.enableModifiedTimingFormat = false;
-	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
-    DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
-    DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+	masterConfig2.whichCtar = kDSPI_Ctar0;
+	masterConfig2.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
+	masterConfig2.ctarConfig.bitsPerFrame                  = 8U;
+	masterConfig2.ctarConfig.cpol                          = kDSPI_ClockPolarityActiveHigh;
+	masterConfig2.ctarConfig.cpha                          = kDSPI_ClockPhaseFirstEdge;
+	masterConfig2.ctarConfig.direction                     = kDSPI_MsbFirst;
+	masterConfig2.ctarConfig.pcsToSckDelayInNanoSec        = 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig2.ctarConfig.lastSckToPcsDelayInNanoSec    = 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig2.ctarConfig.betweenTransferDelayInNanoSec = 1000000000U / TRANSFER_BAUDRATE;
+	masterConfig2.whichPcs           = EXAMPLE_DSPI_MASTER_PCS_FOR_INIT;
+	masterConfig2.pcsActiveHighOrLow = kDSPI_PcsActiveLow;
+	masterConfig2.enableContinuousSCK        = false;
+	masterConfig2.enableRxFifoOverWrite      = false;
+	masterConfig2.enableModifiedTimingFormat = false;
+	masterConfig2.samplePoint                = kDSPI_SckToSin0Clock;
+    DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig2, DSPI_MASTER_CLK_FREQ);
+    DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle2, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
-    isTransferCompleted
+    isTransferCompleted2
     = true;
-    masterXfer.txData      = getMainFeaturesSend;//masterTxData
-    masterXfer.rxData      = NULL;
-    masterXfer.dataSize    = getMainFeaturesSendSize;
-    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
+    masterXfer2.txData      = getMainFeaturesSend;//masterTxData
+    masterXfer2.rxData      = NULL;
+    masterXfer2.dataSize    = getMainFeaturesSendSize;
+    masterXfer2.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle2, &masterXfer2);
     /* Wait transfer complete */
-    while (!isTransferCompleted){
+    while (!isTransferCompleted2){
     }
     /* Delay to wait slave is ready */
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
     /* Start master transfer, receive data from slave */
-    isTransferCompleted    = true;
-    masterXfer.txData      = NULL;
-    masterXfer.rxData      = returnMainFeatures;//masterRxData
-    masterXfer.dataSize    = getMainFeaturesReturnSize;//Transfer_Size
-    masterXfer.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
-    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, &masterXfer);
-    while (!isTransferCompleted){
+    isTransferCompleted2    = true;
+    masterXfer2.txData      = NULL;
+    masterXfer2.rxData      = returnMainFeatures;//masterRxData
+    masterXfer2.dataSize    = getMainFeaturesReturnSize;//Transfer_Size
+    masterXfer2.configFlags = kDSPI_MasterCtar0 | EXAMPLE_DSPI_MASTER_PCS_FOR_TRANSFER | kDSPI_MasterPcsContinuous;
+    DSPI_MasterTransferNonBlocking(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle2, &masterXfer2);
+    while (!isTransferCompleted2){
     }
     /* Delay to wait slave is ready */
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
     DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
+    DSPI_Deinit(EXAMPLE_DSPI_MASTER_BASEADDR);
     return returnMainFeatures;
 }
 
 uint8_t* setMode(uint8_t mode){
     setModeSend[4] = mode;//toggles 2 LED's on top of Pixy2
-
 	masterConfig.whichCtar = kDSPI_Ctar0;
 	masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
 	masterConfig.ctarConfig.bitsPerFrame                  = 8U;
@@ -613,6 +615,7 @@ uint8_t* setMode(uint8_t mode){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -642,7 +645,6 @@ uint8_t* setMode(uint8_t mode){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnMode;
 }
 
@@ -670,6 +672,7 @@ uint8_t* setNextTurn(uint16_t angle){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -699,7 +702,6 @@ uint8_t* setNextTurn(uint16_t angle){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnNextTurn;
 }
 
@@ -727,6 +729,7 @@ uint8_t* setDefaultTurn(uint16_t angle){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -756,13 +759,16 @@ uint8_t* setDefaultTurn(uint16_t angle){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnDefaultTurn;
 }
 
 uint8_t* setVector(uint8_t angle){
     setVectorSend[4] = angle;
 
+    uint8_t* rxData;
+    dspi_master_config_t masterConfig;
+    dspi_transfer_t masterXfer;
+    dspi_master_handle_t g_m_handle;
 	masterConfig.whichCtar = kDSPI_Ctar0;
 	masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
 	masterConfig.ctarConfig.bitsPerFrame                  = 8U;
@@ -780,6 +786,7 @@ uint8_t* setVector(uint8_t angle){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -810,11 +817,14 @@ uint8_t* setVector(uint8_t angle){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnVector;
 }
 
 uint8_t* reverseVector(){
+	uint8_t* rxData;
+	dspi_master_config_t masterConfig;
+	dspi_transfer_t masterXfer;
+	dspi_master_handle_t g_m_handle;
 	masterConfig.whichCtar = kDSPI_Ctar0;
 	masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
 	masterConfig.ctarConfig.bitsPerFrame                  = 8U;
@@ -832,6 +842,7 @@ uint8_t* reverseVector(){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -861,7 +872,6 @@ uint8_t* reverseVector(){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnReverseVector;
 }
 
@@ -878,6 +888,10 @@ uint8_t* getRGB(uint16_t x, uint16_t y, uint8_t saturate){
     getRGBSend[7] = yarray[1];
     getRGBSend[8] = saturate;
 
+    uint8_t* rxData;
+    dspi_master_config_t masterConfig;
+    dspi_transfer_t masterXfer;
+    dspi_master_handle_t g_m_handle;
 	masterConfig.whichCtar = kDSPI_Ctar0;
 	masterConfig.ctarConfig.baudRate                      = TRANSFER_BAUDRATE;
 	masterConfig.ctarConfig.bitsPerFrame                  = 8U;
@@ -895,6 +909,7 @@ uint8_t* getRGB(uint16_t x, uint16_t y, uint8_t saturate){
 	masterConfig.samplePoint                = kDSPI_SckToSin0Clock;
     DSPI_MasterInit(EXAMPLE_DSPI_MASTER_BASEADDR, &masterConfig, DSPI_MASTER_CLK_FREQ);
     DSPI_MasterTransferCreateHandle(EXAMPLE_DSPI_MASTER_BASEADDR, &g_m_handle, DSPI_MasterUserCallback, NULL);
+    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
 
     /* Start master transfer, send data to slave */
     isTransferCompleted
@@ -924,6 +939,5 @@ uint8_t* getRGB(uint16_t x, uint16_t y, uint8_t saturate){
     for (int i = 0; i < EXAMPLE_DSPI_DEALY_COUNT; i++){
         __NOP();
     }
-    DSPI_FlushFifo(EXAMPLE_DSPI_MASTER_BASEADDR, true, true);
     return returnRGB;
 }

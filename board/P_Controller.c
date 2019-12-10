@@ -5,28 +5,73 @@
 #include "MK64F12.h"
 #include "fsl_debug_console.h"
 #include "P_Controller.h"
+#include "pixy2.h"
+#include "UART3_d.h"
 
-float lastU;// start servo at 90 degrees
+int modeValue1;  //0 for cone, 1 for line
 float thisU;
-float lastE;
 float thisE;// send PWM every 20 ms
+int turnCounter;
+int turnTime;
 
 void PID_Init(){
-	lastU = 2812.5;
-	lastE = 0;
+	thisU = 2812.5;
+	modeValue1 = 0;
+	turnCounter = 0;
+	turnTime = 0;
 }
 
-float PID_Controller (int middleError){
-	if(middleError != 0){
-		thisE = ((float)middleError); // pixel difference between center of camera and center of pillars, this is error value
-		//thisU = lastU + (Kp + Ki*(2/Ts))*thisE + (-Kp+Ki*(2/Ts))*lastE;    // actual P calculation
-		thisU = lastU + Aval*thisE;    // actual P calculation
-		lastU = thisU; 				// set lastU to thisU for proceeding calculation
-		lastE = thisE; 				// set lastE to thisE for proceeding calculation
-		return thisU;				// this will be new MOD value
+float PID_Controller (int middleError, int lastVal){
+	if(modeValue1 == 0){
+		turnCounter = 0;
+		if(middleError != 0){
+			thisE = ((float)middleError); // pixel difference between center of camera and center of pillars, this is error value
+			thisU = AvalCone*thisE + midVal;    // actual P calculation
+			return thisU;				// this will be new MOD value
+		}
+		else{
+			return lastVal;				// this will be new MOD value
+		}
 	}
 	else{
-		return thisU;				// this will be new MOD value
+		if(middleError != 0){
+			thisE = ((float)middleError); // pixel difference between center of camera and center of pillars, this is error value
+			thisU = AvalLine*thisE + midVal;    // actual P calculation
+			return thisU;				// this will be new MOD value
+		}
+		else{
+			return lastVal;				// this will be new MOD value
+		}
+		delay_ms(20);
+	}
+}
 
+void setModeValue(int mode){
+	modeValue1 = mode;
+}
+
+float setTurnTime(int way, int lastVal){
+	turnTime = 1;
+	if(turnCounter > 45){
+		if(turnCounter == 46){
+			if(way == 1){
+				setServos(435, 440);
+			}
+			else{
+				setServos(588, 440);
+			}
+
+		}
+		if(way == 1){//1 turns right
+			return 3750;
+		}
+		else{// 0 turns left
+			return 1875;
+		}
+		turnCounter++;
+	}
+	else{
+		turnCounter++;
+		return lastVal;
 	}
 }
